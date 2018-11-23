@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "prettier": "^1.15.2",
+    "prettier-plugin-elm": "^0.4.1"
+  }
+}
