@@ -4,7 +4,7 @@ import Browser
 import Html exposing (Html, blockquote, button, div, h1, h2, h3, img, input, label, p, text)
 import Html.Attributes exposing (class, classList, for, id, src, type_)
 import Html.Events exposing (onClick, onInput)
-import Http exposing (Error(..), expectJson, expectString)
+import Http exposing (Error(..), Expect, Response(..), expectJson, expectString, expectStringResponse)
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 
@@ -46,7 +46,7 @@ type Msg
     | SetUsername String
     | SetPassword String
     | ClickRegisterUser
-    | GotTokenCompleted (Result Http.Error String)
+    | GotTokenCompleted (Result String String)
     | ClickLogin
     | LogOut
 
@@ -250,37 +250,45 @@ tokenDecoder =
 
 authUser : Model -> String -> Cmd Msg
 authUser model apiUrl =
-    let
-        body =
-            model
-                |> userEncoder
-                |> Http.jsonBody
-    in
-    Http.post { url = apiUrl, body = body, expect = expectJson GotTokenCompleted tokenDecoder }
+    Http.post
+        { url = apiUrl
+        , body = Http.jsonBody (userEncoder model)
+        , expect = expectJson GotTokenCompleted tokenDecoder
+        }
 
 
-getTokenCompleted : Model -> Result Http.Error String -> ( Model, Cmd Msg )
+expectJson : (Result String String -> Msg) -> Decode.Decoder String -> Expect Msg
+expectJson toMsg decoder =
+    expectStringResponse toMsg (parseStringResponse decoder)
+
+
+parseStringResponse : Decoder String -> Http.Response String -> Result String String
+parseStringResponse decoder response =
+    case response of
+        BadUrl_ msg ->
+            Err msg
+
+        Timeout_ ->
+            Err "Timeout"
+
+        NetworkError_ ->
+            Err "Network err"
+
+        BadStatus_ metadata body ->
+            Err body
+
+        GoodStatus_ metadata body ->
+            Decode.decodeString decoder body |> Result.mapError Decode.errorToString
+
+
+getTokenCompleted : Model -> Result String String -> ( Model, Cmd Msg )
 getTokenCompleted model result =
     case result of
         Ok newToken ->
             { model | token = newToken, password = "", errorMsg = "" } |> setStorageHelper
 
         Err error ->
-            case error of
-                BadUrl msg ->
-                    ( { model | errorMsg = msg }, Cmd.none )
-
-                Timeout ->
-                    ( { model | errorMsg = "There was a timeout..." }, Cmd.none )
-
-                NetworkError ->
-                    ( { model | errorMsg = "Network Error..." }, Cmd.none )
-
-                BadStatus code ->
-                    ( { model | errorMsg = "Status Code " ++ String.fromInt code }, Cmd.none )
-
-                BadBody msg ->
-                    ( { model | errorMsg = msg }, Cmd.none )
+            ( { model | errorMsg = error }, Cmd.none )
 
 
 
