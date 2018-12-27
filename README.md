@@ -2,6 +2,8 @@
 
 This project is bootstrapped with [Create Elm App](https://github.com/halfzebra/create-elm-app).
 
+Live at https://elm-with-auth.now.sh
+
 A simple elm app with authentication. From
 https://auth0.com/blog/creating-your-first-elm-app-part-2/,
 updated for elm 0.19.

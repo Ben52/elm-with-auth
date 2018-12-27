@@ -1,6 +1,7 @@
 {
   "version": 2,
   "public": true,
+  "alias": "elm-with-auth.now.sh",
   "builds": [{ "src": "package.json", "use": "@now/static-build" }],
   "routes": [
     { "src": "/static/(.*)", "dest": "/static/$1" },
