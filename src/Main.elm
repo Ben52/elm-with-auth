@@ -177,7 +177,7 @@ view model =
 
 api : String
 api =
-    "http://localhost:3005/"
+    "https://nodejs-jwt-authentication-sample.now.sh/"
 
 
 registerUrl : String
